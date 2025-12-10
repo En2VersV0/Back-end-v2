@@ -4,35 +4,43 @@ const cloudinary = require("cloudinary").v2;
 const fileUpload = require("express-fileupload");
 
 const isAuthenticated = require("../middleware/isAuthenticated");
+const isPermitted = require("../middleware/isPermitted");
 const User = require("../models/User");
 const convertToBase64 = require("../utils/convertToBase64");
 
 // READ USER INFO
-router.get("/user/profile/:id", isAuthenticated, async (req, res) => {
-  const { id } = req.params;
-  const authUserToken = req.user.token;
-  //   console.log("USER", getUser);
+router.get(
+  "/user/profile/:id",
+  isAuthenticated,
+  isPermitted,
+  async (req, res) => {
+    const { id } = req.params;
+    // const authUserToken = req.user.token;
+    //   console.log("USER", getUser);
 
-  try {
-    const getUserProfile = await User.findById(id).select("-salt -hash");
-    if (!getUserProfile)
-      return res.status(400).json({ message: "User not found !" });
+    try {
+      const getUserProfile = await User.findById(id).select(
+        "-salt -hash -token"
+      );
+      if (!getUserProfile)
+        return res.status(400).json({ message: "User not found !" });
 
-    // CHECK IF CONNECTED USER IS THE GOOD ONE
-    if (getUserProfile.token !== authUserToken)
-      return res.status(401).json({ message: "Unauthorized !" });
+      // CHECK IF CONNECTED USER IS THE GOOD ONE
+      // if (getUserProfile.token !== authUserToken)
+      //   return res.status(401).json({ message: "Unauthorized !" });
 
-    res.status(201).json({ user: getUserProfile });
-  } catch (error) {
-    res.status(500).json({
-      message: "Something went wrong...",
-      errorMessage: error.message,
-    });
+      res.status(201).json({ user: getUserProfile });
+    } catch (error) {
+      res.status(500).json({
+        message: "Something went wrong...",
+        errorMessage: error.message,
+      });
+    }
   }
-});
+);
 
 // UPDATE USER INFO
-router.put("/user/:id", isAuthenticated, async (req, res) => {
+router.put("/user/:id", isAuthenticated, isPermitted, async (req, res) => {
   const {
     fullname,
     email,
@@ -50,7 +58,7 @@ router.put("/user/:id", isAuthenticated, async (req, res) => {
     description,
   } = req.body;
   const { id } = req.params;
-  const authUserToken = req.user.token;
+  // const authUserToken = req.user.token;
 
   try {
     // FIND USER BY USER ID
@@ -59,8 +67,8 @@ router.put("/user/:id", isAuthenticated, async (req, res) => {
       return res.status(400).json({ message: "User not found !" });
 
     // CHECK IF CONNECTED USER IS THE GOOD ONE
-    if (userUpdate.token !== authUserToken)
-      return res.status(401).json({ message: "Unauthorized !" });
+    // if (userUpdate.token !== authUserToken)
+    //   return res.status(401).json({ message: "Unauthorized !" });
 
     // UPDATE USER INFO
     if (fullname) userUpdate.fullname = fullname;
@@ -113,10 +121,11 @@ router.put("/user/:id", isAuthenticated, async (req, res) => {
 router.put(
   "/user/avatar/:id",
   isAuthenticated,
+  isPermitted,
   fileUpload(),
   async (req, res) => {
     const { id } = req.params;
-    const authUserToken = req.user.token;
+    // const authUserToken = req.user.token;
     try {
       // FIND USER BY USER ID
       const userAvatarUpload = await User.findById(id).select("-salt -hash");
@@ -124,8 +133,8 @@ router.put(
         return res.status(400).json({ message: "User not found !" });
 
       // CHECK IF CONNECTED USER IS THE GOOD ONE
-      if (userAvatarUpload.token !== authUserToken)
-        return res.status(401).json({ message: "Unauthorized !" });
+      // if (userAvatarUpload.token !== authUserToken)
+      //   return res.status(401).json({ message: "Unauthorized !" });
 
       // GET AVATAR & UPLOAD ON CLOUDINARY
       if (req.files) {
@@ -210,9 +219,9 @@ router.get("/user/:id", isAuthenticated, async (req, res) => {
 });
 
 // DELETE USER FROM DATABASE
-router.delete("/user/:id", isAuthenticated, async (req, res) => {
+router.delete("/user/:id", isAuthenticated, isPermitted, async (req, res) => {
   const { id } = req.params;
-  const authUserToken = req.user.token;
+  // const authUserToken = req.user.token;
   // console.log("TOKEN", authUserToken);
 
   try {
@@ -220,8 +229,8 @@ router.delete("/user/:id", isAuthenticated, async (req, res) => {
     if (!getUser) return res.status(400).json({ message: "User not found !" });
 
     // CHECK IF CONNECTED USER IS THE GOOD ONE
-    if (getUser.token !== authUserToken)
-      return res.status(401).json({ message: "Unauthorized !" });
+    // if (getUser.token !== authUserToken)
+    //   return res.status(401).json({ message: "Unauthorized !" });
 
     await User.findByIdAndDelete(id);
 
