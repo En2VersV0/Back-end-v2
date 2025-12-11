@@ -233,9 +233,9 @@ router.get("/user", isAuthenticated, async (req, res) => {
     let getLimit = limit || 10;
     if (page) getSkip = getLimit * page - 10;
 
-    const getUser = await User.find({ account: { username: username } }).select(
-      "-salt -hash -token -fullname -email"
-    );
+    const getUser = await User.find({
+      account: { username: { $regex: username, $options: "1" } },
+    }).select("-salt -hash -token -fullname -email");
     // .limit(getLimit)
     // .skip(getSkip);
 
