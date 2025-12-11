@@ -233,11 +233,14 @@ router.get("/user", isAuthenticated, async (req, res) => {
     let getLimit = limit || 10;
     if (page) getSkip = getLimit * page - 10;
 
-    const getUser = await User.find({ account: { username: username } }).select(
-      "-salt -hash -token -fullname -email"
-    );
-    // .limit(getLimit)
-    // .skip(getSkip);
+    const search = new RegExp(username, "i");
+
+    const getUser = await User.find({
+      "account.username": search,
+    })
+      .select("-salt -hash -token -fullname -email")
+      .limit(getLimit)
+      .skip(getSkip);
 
     res.status(201).json({ user: getUser });
   } catch (error) {
